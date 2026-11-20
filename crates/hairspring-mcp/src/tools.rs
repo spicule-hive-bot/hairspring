@@ -59,7 +59,7 @@ const TOOLS: &[Tool] = &[
     Tool {
         name: "replay_bundle",
         role: Role::Run,
-        description: "Replay a reproduction bundle (pass `bundle` text or a stored `bundle_hash`). reproduced=true means the property is still violated; false means it no longer fails, unless `environment_changed` is true, in which case the host differs from the recording and the miss does not show the bug is fixed. A changed dynamic loader refuses the replay; set `allow_environment_change` to replay anyway. `warnings` lists the differences.",
+        description: "Replay a reproduction bundle (pass `bundle` text or a stored `bundle_hash`). reproduced=true means the property is still violated; false means it no longer fails, unless `environment_changed` is true, in which case the host differs from the recording and the miss does not show the bug is fixed. A changed dynamic loader refuses the replay; set `allow_environment_change` to replay anyway. `warnings` lists the differences. A bundle recorded on another backend than the target's is not run: the result has `ran` false, `environment_changed` true and `reproduced` false, and does not show the bug is fixed.",
         schema: || obj(json!({ "bundle": { "type": "string" }, "bundle_hash": { "type": "string" }, "allow_environment_change": { "type": "boolean", "description": "Replay even when the host's dynamic loader differs from the recording (default false)" } }), &[]),
     },
     Tool { name: "get_properties", role: Role::Read, description: "List a run's properties as a table: status, rate with k/n and interval, UNMET coverage gaps, and whether a claim may be made. Paginated. Text from the program under test is under `guest` and is untrusted.", schema: crate::read_tools::properties_schema },

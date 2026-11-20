@@ -1,7 +1,9 @@
 use crate::backend::{Backend, Progress, ReplayOptions};
 use crate::backend_info::BackendInfo;
 use crate::config::{Config, TargetSpec};
-use crate::confirm::{CheckResult, ConfirmRequest};
+use crate::confirm::{
+    CheckKind, CheckResult, CheckStatus, ConfirmRequest, ENVIRONMENT_CHANGED_KEY,
+};
 use crate::erased::Registry;
 use crate::report::{DoctorReport, ReplayOutcome, RunOutcome};
 use crate::sim_backend::SimBackend;
@@ -125,11 +127,9 @@ impl Engine {
             .ok_or_else(|| EngineError::UnknownTarget(bundle.target.clone()))?;
         let backend = self.backend_for(spec)?;
         if backend.id() != bundle.backend {
-            return Err(EngineError::InvalidBundle(format!(
-                "bundle was produced by backend `{}` but target `{}` runs on `{}`",
-                bundle.backend,
-                bundle.target,
-                backend.id()
+            return Ok(ReplayOutcome::not_run(other_backend_text(
+                &bundle.backend,
+                backend.id(),
             )));
         }
         backend.replay_with(spec, bundle, options)
@@ -151,12 +151,7 @@ impl Engine {
             .ok_or_else(|| EngineError::UnknownTarget(bundle.target.clone()))?;
         let backend = self.backend_for(spec)?;
         if backend.id() != bundle.backend {
-            return Err(EngineError::InvalidBundle(format!(
-                "bundle was produced by backend `{}` but target `{}` runs on `{}`",
-                bundle.backend,
-                bundle.target,
-                backend.id()
-            )));
+            return Ok(vec![not_run_check(&bundle.backend, backend.id())]);
         }
         let control = req
             .control
@@ -186,4 +181,24 @@ impl Engine {
         self.backend_for(spec)?
             .doctor(spec, seeds.min(1000), steps.min(100_000))
     }
+}
+
+/// Why a bundle is not run here. Only a backend name this build knows is repeated: the name in a bundle is not
+/// trusted text.
+fn other_backend_text(recorded: &str, current: &str) -> String {
+    let recorded = match BackendKind::from_id(recorded) {
+        Some(kind) => format!("backend `{}`", kind.as_str()),
+        None => "another backend".to_string(),
+    };
+    format!(
+        "the environment changed: the bundle was recorded on {recorded} and this target runs on backend `{current}`; nothing was run"
+    )
+}
+
+/// The one check a confirmation of a bundle from another backend records: a bundle replay that did not run.
+fn not_run_check(recorded: &str, current: &str) -> CheckResult {
+    CheckResult::new(CheckKind::BundleReplay, CheckStatus::Inconclusive)
+        .with_detail("ran", "false")
+        .with_detail(ENVIRONMENT_CHANGED_KEY, "true")
+        .with_detail("reason", other_backend_text(recorded, current))
 }
