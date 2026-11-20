@@ -138,3 +138,21 @@ Sign-off is checked by a maintainer at review time. There is no automated check 
 CI runs fmt, clippy, tests on Linux and macOS, the UI typecheck, tests and build, and dependency audits (`make audit`
 runs the same audits locally). Use a conventional-commit title (`docs: ...`, `fix: ...`). Describe the problem,
 the approach, and how you tested it; the pull request template has a checklist. Security-sensitive changes (auth, input handling, process execution) get extra review.
+
+## Agents, bots and the `ci` check
+
+Some changes here are made by AI agents (the Hive, GitHub Copilot, Claude Code, Cursor) as well as by people. They follow
+the same rules as everyone else in this file, including the sign-off above, and the rules written down for them are in
+[`AGENTS.md`](AGENTS.md).
+
+- **The required check is `ci`.** It is the last job of `.github/workflows/ci.yml` and needs every other job in that file.
+  It is red when any of them failed or was cancelled, and a skipped manual-only job does not turn it red. Add a new job
+  to its `needs` list. Do not rename it: a ruleset on `main` and the Hive's automation match the name `ci`.
+- **Branches and pull requests.** Work on a branch, open a pull request against `main`, and do not merge while `ci` is red.
+  Read the failing step of `gh pr checks <n>`, not the colour of the badge.
+- **Labels agents obey.** `issue-approved` admits an issue to agents and needs acceptance criteria (a checklist or an
+  "Acceptance criteria" section saying how done is verified). `hold`, `do-not-merge`, `needs-human` and `human-queue` keep
+  agents away from an issue or pull request; only a human removes them. `needs-rework` sends a pull request back for
+  another pass: make `ci` green and resolve the open review comments.
+- **Bot pull requests.** A pull request opened with the default `GITHUB_TOKEN` does not start its `pull_request` workflows
+  by itself; GitHub holds them as `action_required` until a maintainer approves the runs in the Actions tab.
