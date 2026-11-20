@@ -458,4 +458,16 @@ fn a_confirmation_that_ran_nothing_does_not_lift_a_not_reproducible_finding() {
 fn a_failure_whose_only_confirmation_ran_nothing_is_a_candidate() {
     let s = standing(&[not_run()]);
     assert_eq!(s.status, FindingStatus::Candidate);
+    assert_eq!(s.confirmation, None, "no confirmation counts towards it");
+}
+
+#[test]
+fn checks_that_ran_nothing_never_read_as_passes_whatever_their_status_says() {
+    let forged: Vec<CheckResult> = confirmed_set()
+        .into_iter()
+        .map(|c| c.with_detail("ran", "false"))
+        .collect();
+    let s = standing(&[forged]);
+    assert_eq!(s.status, FindingStatus::Candidate);
+    assert_eq!(s.confirmation, None);
 }

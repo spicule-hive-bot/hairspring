@@ -159,9 +159,14 @@ pub(super) fn confirm_stored_run(
 pub(super) fn write_stored(out: &mut dyn Write, checks: &FailureChecks) -> CmdResult<i32> {
     writeln!(out, "failure {}", checks.failure_id)?;
     if newest_ran_nothing(checks) {
+        let tail = if checks.confirmation_id.is_some() {
+            "the finding below is from the earlier checks"
+        } else {
+            "no earlier confirmation ran, so the finding is candidate"
+        };
         writeln!(
             out,
-            "nothing was run: the bundle was recorded on another backend than the target's, so this confirmation shows nothing about the bug; the finding below is from the earlier checks"
+            "nothing was run: the bundle was recorded on another backend than the target's, so this confirmation shows nothing about the bug; {tail}"
         )?;
     } else if newest_is_set_aside(checks) {
         writeln!(
@@ -377,6 +382,20 @@ mod tests {
     fn a_confirmation_that_ran_keeps_the_exit_code_of_its_finding() {
         let checks = after_a_confirmed_finding(view("c2", "bundle_replay", "pass", true));
         assert_eq!(stored_exit(&checks), crate::EXIT_VIOLATION);
+    }
+
+    #[test]
+    fn with_no_earlier_confirmation_it_says_so_and_does_not_point_at_earlier_checks() {
+        let mut checks =
+            after_a_confirmed_finding(view("c2", "bundle_replay", "inconclusive", false));
+        checks.checks.drain(..2);
+        checks.finding = "candidate".into();
+        checks.confirmation_id = None;
+        let mut out = Vec::new();
+        write_stored(&mut out, &checks).unwrap();
+        let said = String::from_utf8(out).unwrap();
+        assert!(said.contains("no earlier confirmation ran"), "{said}");
+        assert!(!said.contains("from the earlier checks"), "{said}");
     }
 
     #[test]

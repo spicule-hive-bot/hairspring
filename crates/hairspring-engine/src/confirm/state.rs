@@ -148,12 +148,19 @@ fn missed(checks: &[CheckResult]) -> bool {
 /// skipped after it) withdraws the finding, and the newest such confirmation is the one read.
 ///
 /// A confirmation that ran nothing (a bundle from another backend: its checks say `ran` is `false`) is not read at all:
-/// it cannot replace an earlier confirmation, lift it or withdraw it. It is read only when it is all there is.
+/// it cannot replace an earlier confirmation, lift it or withdraw it. When it is all there is, the finding is a candidate and no confirmation counts towards it.
 pub fn standing(confirmations: &[Vec<CheckResult>]) -> Standing {
     let counted: Vec<usize> = (0..confirmations.len())
         .filter(|&i| !ran_nothing(&confirmations[i]))
         .collect();
-    if counted.is_empty() || counted.len() == confirmations.len() {
+    if counted.is_empty() && !confirmations.is_empty() {
+        return Standing {
+            status: FindingStatus::Candidate,
+            pinned: false,
+            confirmation: None,
+        };
+    }
+    if counted.len() == confirmations.len() {
         return standing_of_all(confirmations);
     }
     let kept: Vec<Vec<CheckResult>> = counted.iter().map(|&i| confirmations[i].clone()).collect();
