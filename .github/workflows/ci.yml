@@ -610,3 +610,47 @@ jobs:
           node-version: 22
       - run: npm audit --omit=dev
         working-directory: web
+
+  # Single stable check name for the merge convention and the Hive's automation. The ruleset on `main` (maintained by the
+  # repository owners, not by this file) requires this check by name, so keep the job id and `name` exactly `ci`, and
+  # add every new pull-request job to `needs` below. It is green only when every job it needs finished as `success`
+  # or `skipped`: a failed or cancelled job fails it. `skipped` is accepted on purpose because the two manual-only jobs
+  # (`fixture-build-records`, `install-clean-machine`) are skipped on every push and pull request. This job gates
+  # nothing by itself and changes what no other job does.
+  ci:
+    name: ci
+    if: always()
+    needs:
+      - rust
+      - rust-ubuntu-container
+      - c-sdk
+      - rust-sdk
+      - go-example
+      - go-sdk
+      - python-sdk
+      - java-sdk
+      - dotnet-sdk
+      - language-fixtures
+      - ds-fixtures
+      - fixture-build-records
+      - glibc-condlock-example
+      - install-scripts
+      - install-clean-machine
+      - postgres
+      - web
+      - audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: All required jobs passed
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          set -euo pipefail
+          echo "$NEEDS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          bad="$(echo "$NEEDS" | jq -r '[to_entries[] | select(.value.result != "success" and .value.result != "skipped") | .key] | join(", ")')"
+          if [ -n "$bad" ]; then
+            echo "::error::These jobs did not succeed: $bad"
+            exit 1
+          fi
