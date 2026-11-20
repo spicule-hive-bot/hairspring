@@ -455,8 +455,8 @@ $ curl -s -X POST -H "Authorization: Bearer $RUN_TOKEN" -H 'content-type: applic
 the recording; a replay that did not reproduce the failure then shows nothing about whether it is fixed. A bundle
 recorded on another backend than the target's is not run: the answer is `200` with `"ran":false`,
 `"environment_changed":true`, `"reproduced":false` and no steps, and `warnings` says which backends are involved. `ran`
-is left out when the replay ran. The MCP `replay_bundle` tool returns the same fields. A replay refused because the loader changed is a `409` with
-`"code":"environment_mismatch"`. Only a few replays run at once, and one over the cap is refused with a 429 (below).
+is left out when the replay ran. The MCP `replay_bundle` tool returns the same fields. A replay refused because the
+loader changed is a `409` with `"code":"environment_mismatch"`. Only a few replays run at once, and one over the cap is refused with a 429 (below).
 The command-line form is `hairspring replay`, with its own exit codes, in the [quickstart](quickstart.md#replay-a-bundle).
 
 ## Limits and errors

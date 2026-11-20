@@ -397,3 +397,30 @@ fn confirming_a_bundle_from_another_backend_runs_nothing_and_says_the_environmen
     assert_eq!(c.counts.total(), 0);
     assert_eq!(finding_status(&checks), FindingStatus::Candidate);
 }
+
+#[test]
+fn a_misspelt_control_target_is_refused_even_for_a_bundle_from_another_backend() {
+    let e = must_not_run_engine();
+    let req = ConfirmRequest {
+        control: Some("nosuch".into()),
+        ..ConfirmRequest::default()
+    };
+    let err = e
+        .confirm(&bundle_from("wasm"), &req, &mut |_| true)
+        .unwrap_err();
+    assert!(
+        matches!(&err, EngineError::UnknownTarget(t) if t == "nosuch"),
+        "{err}"
+    );
+}
+
+#[test]
+fn a_bundle_that_names_no_backend_is_said_to_be_possibly_older() {
+    let e = must_not_run_engine();
+    let text = "hairspring-bundle v2\nseed=1\nbuild=b\ntarget=p\npath=\n";
+    let bundle = Bundle::decode(text).expect("an older bundle decodes");
+    let out = e.replay(&bundle).expect("an outcome, not an error");
+    let said = out.warnings.join(" ");
+    assert!(!out.ran, "{said}");
+    assert!(said.contains("records no backend"), "{said}");
+}
