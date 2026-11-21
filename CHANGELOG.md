@@ -42,6 +42,13 @@
   written by a newer build and counts it as a changed environment, so a replay that does not reproduce exits `3`, and one that
   reproduces still exits `1`. An unknown field is treated as one that must match unless the bundle marks it
   informational. A list that names a field twice, or names a known field the bundle does not record, counts as changed.
+
+### Fixed
+
+- The web coverage gate (`scripts/check-coverage.mjs`) now validates every configured web threshold before comparing
+  it with a report: each must be a finite number greater than 0 and at most 100. A malformed value (`null`, a numeric
+  string, zero, a negative number or a number above 100) used to be coerced in the comparison and silently disabled
+  that metric's floor; the checker now refuses it with exit 2.
   Builds from before this change do not read the list and cannot give this protection. The environment
   fields are now declared in a registry, one table per owner, with a comparison rule each; all existing fields keep
   their names, value forms and results.

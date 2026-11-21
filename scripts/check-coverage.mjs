@@ -13,6 +13,14 @@ import { pathToFileURL } from "node:url";
 
 const METRICS = ["statements", "branches", "functions", "lines"];
 
+/** Validates one configured threshold. Returns the number; throws on anything a comparison would silently coerce. */
+function threshold(metric, value) {
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0 || value > 100) {
+    throw new Error(`web threshold ${metric} must be a number greater than 0 and at most 100 (got ${String(value)})`);
+  }
+  return value;
+}
+
 /** Returns [{ metric, actual, threshold, ok }] for one component. Pure; throws on bad input. */
 export function evaluate(component, thresholds, report) {
   const wanted = thresholds?.thresholds?.[component];
@@ -23,7 +31,8 @@ export function evaluate(component, thresholds, report) {
     return METRICS.map((metric) => {
       const actual = total[metric]?.pct;
       if (typeof actual !== "number") throw new Error(`web summary has no ${metric}.pct`);
-      return { metric, actual, threshold: wanted[metric], ok: actual >= wanted[metric] };
+      const limit = threshold(metric, wanted[metric]);
+      return { metric, actual, threshold: limit, ok: actual >= limit };
     });
   }
   throw new Error(`unknown component "${component}"`);
