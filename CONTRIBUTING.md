@@ -5,7 +5,7 @@ Thanks for helping. Hairspring is small enough that one person can hold the desi
 ## Setup
 
 ```bash
-rustup toolchain install stable      # Rust 1.85+ recommended
+rustup toolchain install stable      # Rust 1.96 or newer (the wasmtime 49 crates declare rust-version = "1.96.0")
 make ui                              # Node 22+: builds the web UI that the server embeds
 make test                            # cargo test --workspace --no-fail-fast
 make lint                            # cargo clippy --workspace --all-targets -- -D warnings
