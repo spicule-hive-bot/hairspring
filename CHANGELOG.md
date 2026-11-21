@@ -496,6 +496,9 @@
 
 ### Documentation
 
+- `CONTRIBUTING.md` and `docs/quickstart.md` now give the same Rust minimum for building from source (1.96 or newer,
+  what the wasmtime 49 crates declare), and the quickstart no longer cites a Wasmtime patch version the lockfile can
+  outdate.
 - `docs/supply-chain.md` and SECURITY.md note a known advisory (RUSTSEC-2026-0344, `ruzstd`) in the pinned Hermit
   build, when it can be reached, and that the fix will ship with the next pinned Hermit update.
 - The Developer Certificate of Origin (`DCO`) and a sign-off statement in `CONTRIBUTING.md`: contributions are accepted
