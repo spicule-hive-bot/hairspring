@@ -59,7 +59,7 @@ jobs:
         working-directory: web
         run: >-
           npx vitest run --coverage --coverage.provider=v8
-          --coverage.reporter=json-summary --coverage.reporter=text
+          --coverage.reporter=json --coverage.reporter=json-summary --coverage.reporter=text
           --coverage.include='src/**'
           --coverage.exclude='src/**/*.test.ts' --coverage.exclude='src/**/*.test.tsx'
 
@@ -71,7 +71,9 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: coverage-web
-          path: web/coverage/coverage-summary.json
+          path: |
+            web/coverage/coverage-summary.json
+            web/coverage/coverage-final.json
           if-no-files-found: warn
           retention-days: 14
 
