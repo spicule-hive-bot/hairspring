@@ -6,7 +6,13 @@ name: labeler
 #   - it only runs on pull_request (never pull_request_target), so it never
 #     evaluates fork code in a privileged context;
 #   - the action is pinned to a commit SHA, not a mutable tag;
-#   - the token gets contents:read and pull-requests:write, on the job only, and nothing else.
+#   - the token gets contents:read, pull-requests:write and issues:write, on the
+#     job only, and nothing else — actions/labeler sets labels through the
+#     issues API, so issues:write is what it needs;
+#   - the job skips pull requests from forks: their GITHUB_TOKEN is read-only
+#     no matter what the permissions block grants, so running there can only
+#     fail red without ever labelling (seen on PRs #255/#256). Same-repository
+#     branches keep full labelling.
 #
 # Advisory: continue-on-error means a missing label or a read-only fork token
 # never turns a good PR red. Nothing requires this check.
@@ -20,12 +26,14 @@ permissions:
 
 jobs:
   label:
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     continue-on-error: true
-    # Write scope is held by this job only.
+    # Write scopes are held by this job only.
     permissions:
       contents: read
       pull-requests: write
+      issues: write
     steps:
       - uses: actions/labeler@bf12e9b00b37c5c0ca2b87b79b2daf7891dbda13 # v7.0.0
         with:
