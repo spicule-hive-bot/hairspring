@@ -19,7 +19,7 @@ fast a run is: both depend on your machine and your program. What was measured, 
 | `kernel.yama.ptrace_scope` of 0 or 1 (or run as root; 2 needs root, 3 disables tracing) | Hermit traces the program | same |
 | Linux 6.9 or newer (recommended) | Older kernels take a slower ptrace path. Schedules are not affected, timeouts may be | same (reported as a note) |
 | To build Hermit: `git`, a C compiler, `pkg-config`, `libunwind` and `liblzma` development files, and [rustup](https://rustup.rs) | Hermit is built from source from a pinned fork and commit; there is no binary download | `bash scripts/install-hermit.sh install --dry-run` |
-| To build the `hairspring` CLI from source: a stable Rust toolchain, 1.96 or newer (`rustup` keeps it current; the wasmtime 49.0.5 crates declare `rust-version = "1.96.0"`), and a C compiler and linker (`build-essential` on Debian/Ubuntu, the Xcode command line tools on macOS). With `--with-ui`, also Node.js 20.19 or newer (or 22.12 or newer) with npm, which the web UI's build tools (Vite and rolldown) require. The first build compiles a few hundred crates and can take several minutes. Or download a release binary | | `bash scripts/install.sh --dry-run` |
+| To build the `hairspring` CLI from source: a stable Rust toolchain, 1.96 or newer (`rustup` keeps it current; the wasmtime 49 crates declare `rust-version = "1.96.0"`), and a C compiler and linker (`build-essential` on Debian/Ubuntu, the Xcode command line tools on macOS). With `--with-ui`, also Node.js 20.19 or newer (or 22.12 or newer) with npm, which the web UI's build tools (Vite and rolldown) require. The first build compiles a few hundred crates and can take several minutes. Or download a release binary | | `bash scripts/install.sh --dry-run` |
 
 The scripts never use `sudo`, never change a kernel setting and never install system packages. When a setting is in
 the way they name it and leave the decision to you; lowering a security setting is a trade-off for the owner of the
@@ -541,7 +541,11 @@ CPU flags, loader files, Hermit executable hash, the target program's hash). The
 | 0 | not reproduced, on the environment it was recorded in |
 | 1 | reproduced: the property is still violated |
 | 2 | error, including a replay refused because the dynamic loader changed (`--allow-environment-change` overrides the refusal and still prints the differences) |
-| 3 | not reproduced on a changed environment: inconclusive, not evidence the bug is fixed |
+| 3 | not reproduced on a changed environment, or not run because the bundle was recorded on another backend: inconclusive, not evidence the bug is fixed |
+
+A bundle records the backend that produced it. Replaying one against a target that runs on a different backend (for
+example a bundle from a `wasm` target against a `process` target) runs nothing, prints which backends are involved
+and exits 3. `hairspring confirm` does the same: it stores one inconclusive bundle replay check and exits 3.
 
 See [Recorded environment](determinism.md#recorded-environment) for the fields and what they mean.
 
